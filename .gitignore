@@ -1,0 +1,49 @@
+# .gitignore
+# Ignoriert temporäre Dateien und Verzeichnisse, die von Python und dem Betriebssystem erstellt werden.
+# Ignores temporary files and directories created by Python and the operating system.
+
+# Byte-Code-Dateien
+# Byte-code files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Verteilungs-/Installationsdateien
+# Distribution / installation files
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Umgebungsdateien
+# Environment files
+.env
+.venv
+venv/
+env/
+
+# Testdateien
+# Test files
+.pytest_cache/
+.coverage
+htmlcov/
+.nox/
+temp_config.json # Temporäre Datei für Unit-Tests. Temporary file for unit tests.
+
+# Editor-Swap-Dateien
+# Editor swap files
+*~
+*.swp
+*.swo
+
+# IDE-Dateien
+# IDE files
+.idea/
+.vscode/
+
+# Betriebssystem-Dateien
+# OS-generated files
+.DS_Store
+Thumbs.db
