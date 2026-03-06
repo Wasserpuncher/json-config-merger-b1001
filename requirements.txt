@@ -1,0 +1,5 @@
+# requirements.txt
+# Notwendige Bibliotheken für das Projekt.
+# Required libraries for the project.
+# Dieses Projekt hat derzeit keine externen Abhängigkeiten über die Standardbibliothek von Python hinaus.
+# This project currently has no external dependencies beyond Python's standard library.
