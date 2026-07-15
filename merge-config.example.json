@@ -1,0 +1,8 @@
+{
+  "inputs": [
+    "base.json",
+    "override.json"
+  ],
+  "strategy": "deep_merge",
+  "output": "merged.json"
+}

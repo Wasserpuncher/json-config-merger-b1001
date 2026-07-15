@@ -78,6 +78,40 @@ os.remove("base_config.json")
 os.remove("prod_config.json")
 ```
 
+## Configuration-file driven merges
+
+Instead of wiring everything up in code, a whole merge run can be described in a
+single JSON control file. The control file names the input files to merge, the
+merge strategy to apply, and where to write the result:
+
+```json
+{
+  "inputs": ["base.json", "override.json"],
+  "strategy": "deep_merge",
+  "output": "merged.json"
+}
+```
+
+*   `inputs` (required): ordered list of JSON files to merge, earlier first.
+*   `strategy` (optional): one of `overwrite`, `deep_merge`, `append_list`
+    (defaults to `deep_merge`).
+*   `output` (optional): path the merged result is written to. If omitted, the
+    result is only printed to stdout.
+
+Run it from the command line (see `merge-config.example.json` for a template):
+
+```bash
+python main.py --config merge-config.json
+```
+
+Or drive it programmatically:
+
+```python
+from main import run_from_config
+
+merged = run_from_config("merge-config.json")
+```
+
 ## Project Structure
 
 ```

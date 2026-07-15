@@ -1,6 +1,8 @@
+import argparse
 import json
+import sys
 from enum import Enum
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, List, Optional
 import os
 
 class MergeStrategy(Enum):
@@ -171,3 +173,138 @@ class JSONConfigMerger:
         Resets the merged configuration.
         """
         self.merged_config = {} # Setzt die Konfiguration auf ein leeres Dictionary zurück. Resets the configuration to an empty dictionary.
+
+
+# Standardname der Merge-Steuerungsdatei, falls kein Pfad angegeben wird.
+# Default name of the merge control file if no path is provided.
+DEFAULT_MERGE_CONFIG_FILENAME = "merge-config.json"
+
+
+class MergeRunConfig:
+    """
+    Beschreibt einen kompletten Merge-Lauf, geladen aus einer JSON-Steuerungsdatei.
+    Die Steuerungsdatei benennt die Eingabedateien, die Merge-Strategie und das Ausgabeziel,
+    sodass ein Merge ohne Code-Änderungen konfiguriert werden kann.
+
+    Describes a complete merge run loaded from a JSON control file.
+    The control file names the input files, the merge strategy and the output target,
+    so a merge can be configured without code changes.
+    """
+
+    def __init__(
+        self,
+        inputs: List[str],
+        strategy: MergeStrategy = MergeStrategy.DEEP_MERGE,
+        output: Optional[str] = None,
+    ) -> None:
+        """
+        :param inputs: Reihenfolge der zu mergenden JSON-Eingabedateien.
+                       Ordered list of JSON input files to merge.
+        :param strategy: Die anzuwendende Merge-Strategie. The merge strategy to apply.
+        :param output: Optionaler Pfad, in den das Ergebnis geschrieben wird.
+                       Optional path the result is written to.
+        """
+        self.inputs = inputs
+        self.strategy = strategy
+        self.output = output
+
+    @staticmethod
+    def from_dict(data: Dict[str, Any]) -> "MergeRunConfig":
+        """
+        Erzeugt eine MergeRunConfig aus einem bereits geparsten JSON-Objekt und validiert die Felder.
+        Creates a MergeRunConfig from an already parsed JSON object and validates the fields.
+
+        :raises ValueError: Wenn Pflichtfelder fehlen oder Werte ungültig sind.
+                            If required fields are missing or values are invalid.
+        """
+        if not isinstance(data, dict):
+            raise ValueError("Die Merge-Steuerungsdatei muss ein JSON-Objekt sein.")  # Root must be an object.
+
+        raw_inputs = data.get("inputs")
+        if not isinstance(raw_inputs, list) or not raw_inputs:
+            raise ValueError("Die Steuerungsdatei benötigt ein nicht-leeres 'inputs'-Array.")  # Needs non-empty 'inputs'.
+        inputs: List[str] = []
+        for item in raw_inputs:
+            if not isinstance(item, str):
+                raise ValueError("Jeder Eintrag in 'inputs' muss ein Dateipfad (String) sein.")  # Each input must be a path.
+            inputs.append(item)
+
+        raw_strategy = data.get("strategy", MergeStrategy.DEEP_MERGE.value)
+        if not isinstance(raw_strategy, str):
+            raise ValueError("'strategy' muss ein String sein.")  # 'strategy' must be a string.
+        try:
+            strategy = MergeStrategy(raw_strategy)
+        except ValueError:
+            valid = ", ".join(s.value for s in MergeStrategy)
+            raise ValueError(f"Unbekannte Strategie '{raw_strategy}'. Gültig sind: {valid}.")  # Unknown strategy.
+
+        raw_output = data.get("output")
+        if raw_output is not None and not isinstance(raw_output, str):
+            raise ValueError("'output' muss ein Dateipfad (String) oder null sein.")  # 'output' must be a path or null.
+
+        return MergeRunConfig(inputs=inputs, strategy=strategy, output=raw_output)
+
+
+def load_merge_run_config(config_path: str = DEFAULT_MERGE_CONFIG_FILENAME) -> MergeRunConfig:
+    """
+    Lädt und validiert eine Merge-Steuerungsdatei von der Festplatte.
+    Loads and validates a merge control file from disk.
+
+    :raises FileNotFoundError: Wenn die Steuerungsdatei fehlt. If the control file is missing.
+    :raises json.JSONDecodeError: Wenn die Steuerungsdatei kein gültiges JSON ist. If it is not valid JSON.
+    :raises ValueError: Wenn der Inhalt kein gültiges Merge-Schema ist. If the content is not a valid merge schema.
+    """
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Merge-Steuerungsdatei nicht gefunden: {config_path}")  # Control file not found.
+    with open(config_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return MergeRunConfig.from_dict(data)
+
+
+def run_from_config(config_path: str = DEFAULT_MERGE_CONFIG_FILENAME) -> Dict[str, Any]:
+    """
+    Führt einen kompletten Merge anhand einer Steuerungsdatei aus:
+    lädt die Eingabedateien, merged sie mit der konfigurierten Strategie und
+    schreibt bei Bedarf das Ergebnis in die Ausgabedatei.
+
+    Runs a complete merge driven by a control file: loads the input files,
+    merges them with the configured strategy and, if requested, writes the
+    result to the output file. Returns the merged configuration.
+    """
+    run_config = load_merge_run_config(config_path)
+    merger = JSONConfigMerger(default_strategy=run_config.strategy)
+    for input_path in run_config.inputs:
+        merger.merge(merger.load_config_file(input_path), strategy=run_config.strategy)
+    result = merger.get_merged_config()
+    if run_config.output is not None:
+        with open(run_config.output, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+    return result
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    """
+    Kommandozeilen-Einstiegspunkt: steuert einen Merge über eine JSON-Steuerungsdatei.
+    Command line entry point: drives a merge via a JSON control file.
+    """
+    parser = argparse.ArgumentParser(
+        description="Merge JSON configuration files driven by a JSON control file.",
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        default=DEFAULT_MERGE_CONFIG_FILENAME,
+        help=f"Path to the merge control file (default: {DEFAULT_MERGE_CONFIG_FILENAME}).",
+    )
+    args = parser.parse_args(argv)
+    try:
+        result = run_from_config(args.config)
+    except (FileNotFoundError, json.JSONDecodeError, ValueError, TypeError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
