@@ -2,7 +2,7 @@
 
 ![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![GitHub Actions Workflow Status](https://github.com/your-username/json-config-merger/actions/workflows/python-app.yml/badge.svg)
+![GitHub Actions Workflow Status](https://github.com/Wasserpuncher/json-config-merger-b1001/actions/workflows/python-app.yml/badge.svg)
 
 A powerful and intelligent JSON configuration merger designed for enterprise applications, supporting strategic merging, schema validation (planned), and environment-specific overrides. This tool provides a flexible way to combine multiple JSON configuration sources into a single, cohesive configuration object, essential for complex application deployments.
 
@@ -20,7 +20,7 @@ This project currently has no external dependencies beyond Python's standard lib
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/json-config-merger.git
+    git clone https://github.com/Wasserpuncher/json-config-merger-b1001.git
     cd json-config-merger
     ```
 
