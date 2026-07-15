@@ -1,6 +1,7 @@
 import unittest
 import json
 import os
+from typing import Any, Dict
 from main import JSONConfigMerger, MergeStrategy
 
 class TestJSONConfigMerger(unittest.TestCase):
@@ -112,12 +113,12 @@ class TestJSONConfigMerger(unittest.TestCase):
         """
         base_config = {"a": 1, "b": {"c": 2}, "e": [1, 2]} # Basis-Konfiguration. Base configuration.
         new_config = {"b": {"c": 4, "f": 5}, "g": 6, "e": [3, 4]} # Neue Konfiguration. New configuration.
-        expected_config = {"a": 1, "b": {"c": 4, "d": 3, "f": 5}, "e": [1, 2, 3, 4], "g": 6} # Erwartete Konfiguration.
+        expected_config = {"a": 1, "b": {"c": 4, "f": 5}, "e": [1, 2, 3, 4], "g": 6} # Erwartete Konfiguration.
 
         merger_append = JSONConfigMerger(default_strategy=MergeStrategy.APPEND_LIST) # Merger mit APPEND_LIST-Strategie initialisieren. Initialize merger with APPEND_LIST strategy.
         merger_append.merge(base_config)
         merger_append.merge(new_config)
-        expected_config_for_append = {"a": 1, "b": {"c": 4, "d": 3, "f": 5}, "e": [1, 2, 3, 4], "g": 6}
+        expected_config_for_append = {"a": 1, "b": {"c": 4, "f": 5}, "e": [1, 2, 3, 4], "g": 6}
         self.assertEqual(merger_append.get_merged_config(), expected_config_for_append)
 
     def test_merge_with_default_strategy(self):
@@ -127,7 +128,7 @@ class TestJSONConfigMerger(unittest.TestCase):
         """
         base_config = {"a": 1, "b": {"c": 2}, "e": [1, 2]}
         new_config = {"b": {"c": 4, "f": 5}, "g": 6, "e": [3, 4]}
-        expected_config = {"a": 1, "b": {"c": 4, "d": 3, "f": 5}, "e": [3, 4], "g": 6} # Listen werden bei DEEP_MERGE überschrieben. Lists are overwritten with DEEP_MERGE.
+        expected_config = {"a": 1, "b": {"c": 4, "f": 5}, "e": [3, 4], "g": 6} # Listen werden bei DEEP_MERGE überschrieben. Lists are overwritten with DEEP_MERGE.
 
         self.merger.merge(base_config) # Nutzt die Standardstrategie (DEEP_MERGE). Uses default strategy (DEEP_MERGE).
         self.merger.merge(new_config)

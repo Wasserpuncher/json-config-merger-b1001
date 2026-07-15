@@ -68,6 +68,10 @@ class JSONConfigMerger:
                         merged[key] = value # Überschreibt die Basisliste mit der neuen Liste. Overwrites the base list with the new list.
                     else:
                         merged[key] = value # Standardmäßig überschreiben, falls Strategie nicht spezifisch. Overwrite by default if strategy is not specific.
+                else:
+                    # Skalare oder Typkonflikte (z.B. dict vs. str): der neue Wert überschreibt den alten.
+                    # Scalars or type mismatches (e.g. dict vs. str): the new value overwrites the old one.
+                    merged[key] = value
             else:
                 # Wenn der Schlüssel nicht in der Basis existiert, einfach hinzufügen.
                 # If the key does not exist in the base, simply add it.
